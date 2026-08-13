@@ -87,4 +87,85 @@ router.put('/:roomNumber/status', verifyToken, requireManager, async (req, res) 
   }
 });
 
+// POST /api/rooms — Create a new room (manager)
+router.post('/', verifyToken, requireManager, async (req, res) => {
+  const { RoomNumber, CategoryID, Floor, MaxOccupants, Status } = req.body;
+  if (!RoomNumber || !CategoryID || Floor === undefined || !MaxOccupants) {
+    return res.status(400).json({ error: 'RoomNumber, CategoryID, Floor, and MaxOccupants are required.' });
+  }
+  const validStatuses = ['Available', 'Reserved', 'Occupied', 'Under Maintenance'];
+  const roomStatus = Status || 'Available';
+  if (!validStatuses.includes(roomStatus)) {
+    return res.status(400).json({ error: 'Invalid status. Must be Available, Reserved, Occupied, or Under Maintenance.' });
+  }
+  try {
+    const [existing] = await pool.query('SELECT RoomNumber FROM ROOM WHERE RoomNumber = ?', [RoomNumber]);
+    if (existing.length > 0) return res.status(409).json({ error: `Room ${RoomNumber} already exists.` });
+
+    const [cat] = await pool.query('SELECT CategoryID FROM ROOM_CATEGORY WHERE CategoryID = ?', [CategoryID]);
+    if (!cat.length) return res.status(404).json({ error: 'Room category not found.' });
+
+    await pool.query(
+      'INSERT INTO ROOM (RoomNumber, CategoryID, Floor, MaxOccupants, Status) VALUES (?,?,?,?,?)',
+      [RoomNumber, CategoryID, Floor, MaxOccupants, roomStatus]
+    );
+    res.status(201).json({ message: `Room ${RoomNumber} created successfully.`, RoomNumber });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/rooms/:roomNumber — Edit room details (manager)
+router.put('/:roomNumber', verifyToken, requireManager, async (req, res) => {
+  const { CategoryID, Floor, MaxOccupants, Status } = req.body;
+  try {
+    const [existing] = await pool.query('SELECT * FROM ROOM WHERE RoomNumber = ?', [req.params.roomNumber]);
+    if (!existing.length) return res.status(404).json({ error: 'Room not found.' });
+
+    const validStatuses = ['Available', 'Reserved', 'Occupied', 'Under Maintenance'];
+    if (Status && !validStatuses.includes(Status)) {
+      return res.status(400).json({ error: 'Invalid status.' });
+    }
+
+    const fields = [];
+    const values = [];
+    if (CategoryID !== undefined) { fields.push('CategoryID = ?'); values.push(CategoryID); }
+    if (Floor !== undefined)      { fields.push('Floor = ?');      values.push(Floor); }
+    if (MaxOccupants !== undefined){ fields.push('MaxOccupants = ?'); values.push(MaxOccupants); }
+    if (Status !== undefined)     { fields.push('Status = ?');     values.push(Status); }
+
+    if (!fields.length) return res.status(400).json({ error: 'No fields provided to update.' });
+
+    values.push(req.params.roomNumber);
+    await pool.query(`UPDATE ROOM SET ${fields.join(', ')} WHERE RoomNumber = ?`, values);
+    res.json({ message: `Room ${req.params.roomNumber} updated successfully.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/rooms/:roomNumber — Delete a room (manager)
+router.delete('/:roomNumber', verifyToken, requireManager, async (req, res) => {
+  try {
+    const [existing] = await pool.query('SELECT * FROM ROOM WHERE RoomNumber = ?', [req.params.roomNumber]);
+    if (!existing.length) return res.status(404).json({ error: 'Room not found.' });
+
+    const [activeRes] = await pool.query(
+      `SELECT ReservationID FROM RESERVATION
+       WHERE RoomNumber = ? AND Status IN ('Confirmed', 'Checked-In')`,
+      [req.params.roomNumber]
+    );
+    if (activeRes.length > 0) {
+      return res.status(409).json({
+        error: `Cannot delete Room ${req.params.roomNumber}. It has ${activeRes.length} active reservation(s). Cancel or complete them first.`
+      });
+    }
+
+    await pool.query('DELETE FROM ROOM WHERE RoomNumber = ?', [req.params.roomNumber]);
+    res.json({ message: `Room ${req.params.roomNumber} deleted successfully.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
