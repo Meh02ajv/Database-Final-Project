@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Horizon Hotel — Guest Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-brand">🏨 Grand Horizon Hotel</div>
+  <div class="nav-links">
+    <a href="#" class="active" onclick="showPage('home')">Home</a>
+    <a href="#" onclick="showPage('rooms')">Rooms</a>
+    <a href="#" onclick="showPage('events')">Events</a>
+    <a href="#" id="nav-bookings" onclick="showPage('bookings')" style="display:none">My Bookings</a>
+    <a href="#" id="nav-invoices" onclick="showPage('invoices')" style="display:none">Invoices</a>
+    <span id="nav-user"></span>
+    <button id="btn-logout" onclick="logout()" style="display:none">Logout</button>
+    <button id="btn-login" onclick="openModal('modal-login')">Login</button>
+    <button id="btn-register" onclick="openModal('modal-register')" class="btn btn-accent btn-sm">Register</button>
+  </div>
+</nav>
+
+<!-- ALERT BANNER -->
+<div id="global-alert" style="display:none; position:fixed; top:64px; left:0; right:0; z-index:150; padding:0.75rem 2rem;">
+  <div class="alert" id="global-alert-msg"></div>
+</div>
+
+<!-- ===== HOME PAGE ===== -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h1>Welcome to The Grand Horizon Hotel</h1>
+    <p>Experience luxury and comfort. Book your perfect room or reserve our stunning event spaces for your next occasion.</p>
+    <div style="margin-top:1.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="showPage('rooms')">🛏 Browse Rooms</button>
+      <button class="btn btn-outline" style="color:white;border-color:white;" onclick="showPage('events')">🎪 Book an Event Hall</button>
+    </div>
+  </div>
+
+  <!-- Quick Search -->
+  <div class="search-bar">
+    <div class="form-group">
+      <label>Check-In Date</label>
+      <input type="date" id="home-checkin" min="">
+    </div>
+    <div class="form-group">
+      <label>Check-Out Date</label>
+      <input type="date" id="home-checkout" min="">
+    </div>
+    <div class="form-group">
+      <label>Room Type</label>
+      <select id="home-category">
+        <option value="">All Types</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Guests</label>
+      <input type="number" id="home-occupants" min="1" max="10" value="1" placeholder="1">
+    </div>
+    <button class="btn btn-primary" onclick="quickSearch()">🔍 Search Rooms</button>
+  </div>
+
+  <!-- Features -->
+  <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+    <div class="card" style="text-align:center; padding:1.5rem;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🛏</div>
+      <h3 style="color:var(--primary); margin-bottom:0.5rem;">Luxury Rooms</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Standard, Deluxe, Suite & Family rooms with premium amenities.</p>
+    </div>
+    <div class="card" style="text-align:center; padding:1.5rem;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎪</div>
+      <h3 style="color:var(--primary); margin-bottom:0.5rem;">Event Spaces</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Grand Ballroom, conference rooms, rooftop terrace & more.</p>
+    </div>
+    <div class="card" style="text-align:center; padding:1.5rem;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">📋</div>
+      <h3 style="color:var(--primary); margin-bottom:0.5rem;">Easy Booking</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Instant confirmation with unique booking reference numbers.</p>
+    </div>
+    <div class="card" style="text-align:center; padding:1.5rem;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🧾</div>
+      <h3 style="color:var(--primary); margin-bottom:0.5rem;">Unified Billing</h3>
+      <p style="color:var(--text-muted); font-size:0.9rem;">All charges consolidated into a single, transparent invoice.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ROOMS PAGE ===== -->
+<div class="page" id="page-rooms">
+  <div class="section-header">
+    <h2>🛏 Available Rooms</h2>
+  </div>
+  <!-- Filters -->
+  <div class="search-bar" style="margin-bottom:1.5rem;">
+    <div class="form-group">
+      <label>Check-In</label>
+      <input type="date" id="r-checkin">
+    </div>
+    <div class="form-group">
+      <label>Check-Out</label>
+      <input type="date" id="r-checkout">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="r-category">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Min Price ($/night)</label>
+      <input type="number" id="r-minprice" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label>Max Price ($/night)</label>
+      <input type="number" id="r-maxprice" placeholder="Any" min="0">
+    </div>
+    <div class="form-group">
+      <label>Guests</label>
+      <input type="number" id="r-occupants" min="1" max="10" placeholder="1">
+    </div>
+    <button class="btn btn-primary" onclick="loadRooms()">🔍 Search</button>
+    <button class="btn btn-outline" onclick="clearRoomFilters()">Clear</button>
+  </div>
+  <div id="rooms-list" class="cards-grid"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- ===== EVENTS PAGE ===== -->
+<div class="page" id="page-events">
+  <div class="section-header">
+    <h2>🎪 Event Halls</h2>
+  </div>
+  <div class="search-bar" style="margin-bottom:1.5rem;">
+    <div class="form-group">
+      <label>Event Date</label>
+      <input type="date" id="e-date">
+    </div>
+    <div class="form-group">
+      <label>Start Time</label>
+      <input type="time" id="e-start">
+    </div>
+    <div class="form-group">
+      <label>End Time</label>
+      <input type="time" id="e-end">
+    </div>
+    <div class="form-group">
+      <label>Attendees</label>
+      <input type="number" id="e-attendees" min="1" placeholder="Expected guests">
+    </div>
+    <button class="btn btn-primary" onclick="loadHalls()">🔍 Search Halls</button>
+    <button class="btn btn-outline" onclick="clearHallFilters()">Clear</button>
+  </div>
+  <div id="halls-list" class="cards-grid"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- ===== MY BOOKINGS PAGE ===== -->
+<div class="page" id="page-bookings">
+  <div class="section-header">
+    <h2>📋 My Bookings</h2>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-reservations', this)">Room Reservations</button>
+    <button class="tab-btn" onclick="switchTab('tab-events', this)">Event Bookings</button>
+    <button class="tab-btn" onclick="switchTab('tab-feedback', this)">My Feedback</button>
+  </div>
+  <div id="tab-reservations"><div class="loading"><div class="spinner"></div></div></div>
+  <div id="tab-events" style="display:none"><div class="loading"><div class="spinner"></div></div></div>
+  <div id="tab-feedback" style="display:none"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- ===== INVOICES PAGE ===== -->
+<div class="page" id="page-invoices">
+  <div class="section-header">
+    <h2>🧾 My Invoices</h2>
+  </div>
+  <div id="invoices-list"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <h2>🔐 Guest Login</h2>
+    <div id="login-alert"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-login')">Cancel</button>
+      <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    </div>
+    <p style="text-align:center; margin-top:1rem; font-size:0.88rem; color:var(--text-muted);">
+      No account? <a href="#" onclick="closeModal('modal-login'); openModal('modal-register');" style="color:var(--primary-light);">Register here</a>
+    </p>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <h2>✨ Create Account</h2>
+    <div id="register-alert"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="reg-firstname" placeholder="James">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="reg-lastname" placeholder="Osei">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Contact Number</label>
+        <input type="tel" id="reg-contact" placeholder="+233244001122">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min. 6 characters">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-register')">Cancel</button>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK ROOM MODAL -->
+<div class="modal-overlay" id="modal-book-room">
+  <div class="modal">
+    <h2>🛏 Book Room</h2>
+    <div id="book-room-alert"></div>
+    <div id="book-room-info" style="background:var(--bg); border-radius:8px; padding:1rem; margin-bottom:1rem;"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group">
+          <label>Check-In Date</label>
+          <input type="date" id="book-checkin">
+        </div>
+        <div class="form-group">
+          <label>Check-Out Date</label>
+          <input type="date" id="book-checkout">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Number of Guests</label>
+        <input type="number" id="book-occupants" min="1" value="1">
+      </div>
+      <div id="book-price-preview" style="font-size:0.9rem; color:var(--text-muted);"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-book-room')">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmBookRoom()">✅ Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK EVENT MODAL -->
+<div class="modal-overlay" id="modal-book-event">
+  <div class="modal">
+    <h2>🎪 Book Event Hall</h2>
+    <div id="book-event-alert"></div>
+    <div id="book-event-info" style="background:var(--bg); border-radius:8px; padding:1rem; margin-bottom:1rem;"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group">
+        <label>Event Type</label>
+        <select id="event-type">
+          <option value="Conference">Conference</option>
+          <option value="Wedding Reception">Wedding Reception</option>
+          <option value="Birthday Party">Birthday Party</option>
+          <option value="Seminar">Seminar</option>
+          <option value="Gala Dinner">Gala Dinner</option>
+          <option value="Team Meeting">Team Meeting</option>
+          <option value="Training">Training</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Event Date</label>
+        <input type="date" id="event-date">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="time" id="event-start">
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          <input type="time" id="event-end">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Expected Attendees</label>
+        <input type="number" id="event-attendees" min="1">
+      </div>
+      <div id="event-price-preview" style="font-size:0.9rem; color:var(--text-muted);"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-book-event')">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmBookEvent()">✅ Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="modal-feedback">
+  <div class="modal">
+    <h2>⭐ Submit Feedback</h2>
+    <div id="feedback-alert"></div>
+    <input type="hidden" id="fb-reservation-id">
+    <input type="hidden" id="fb-event-id">
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group">
+        <label>Rating</label>
+        <select id="fb-rating">
+          <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+          <option value="4">⭐⭐⭐⭐ Good</option>
+          <option value="3">⭐⭐⭐ Average</option>
+          <option value="2">⭐⭐ Poor</option>
+          <option value="1">⭐ Very Poor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Comments (optional)</label>
+        <textarea id="fb-comments" placeholder="Share your experience..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-feedback')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFeedback()">Submit Feedback</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE DETAIL MODAL -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal" style="max-width:600px;">
+    <div id="invoice-detail-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-invoice')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
