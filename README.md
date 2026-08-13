@@ -26,7 +26,7 @@ The Grand Horizon Hotel system solves the problem of fragmented, isolated hotel 
 - 🛏 **Room Reservations** — search, book, check-in, check-out
 - 🎪 **Event Hall Bookings** — browse halls, book events, manage schedules
 - 🧾 **Invoicing & Payments** — automated invoice generation, payment recording
-- ⭐ **Customer Feedback** — post-stay and post-event reviews
+- ⭐ **Customer Feedback** — post-sty and post-event reviews
 - 📊 **Manager Dashboard** — real-time KPIs, reports, and analytics
  
 ### Two Interfaces
@@ -363,7 +363,11 @@ npm run dev
 | GET | `/api/rooms` | Public | Search available rooms |
 | GET | `/api/rooms/categories` | Public | All room categories |
 | GET | `/api/rooms/all` | Manager | All rooms with status |
-| PUT | `/api/rooms/:roomNumber/status` | Manager | Update room status |
+| GET | `/api/rooms/:roomNumber` | Public | Single room details |
+| POST | `/api/rooms` | Manager | Create a new room |
+| PUT | `/api/rooms/:roomNumber` | Manager | Edit room details |
+| PUT | `/api/rooms/:roomNumber/status` | Manager | Update room status only |
+| DELETE | `/api/rooms/:roomNumber` | Manager | Delete a room |
  
 ### Reservations
 | Method | Endpoint | Auth | Description |
@@ -400,6 +404,7 @@ npm run dev
 | GET | `/api/reports/occupancy` | Occupancy report by date range |
 | GET | `/api/reports/revenue` | Monthly revenue breakdown |
 | GET | `/api/reports/feedback-summary` | Feedback analytics |
+ 
  
 ---
  
