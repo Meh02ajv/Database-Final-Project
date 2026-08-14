@@ -2,7 +2,6 @@ const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/db');
 const { verifyToken, requireFinanceStaff, requireStaff } = require('../middleware/auth');
-const { validatePayment } = require('../middleware/validate');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/invoices/my — Customer's own invoices
@@ -86,6 +85,7 @@ router.get('/:id', verifyToken, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found.' });
 
     // Customers can only see their own invoices
+    // role === 'customer' matches ROLES.CUSTOMER in auth.js middleware
     if (req.user.role === 'customer') {
       const inv = rows[0];
       const [check] = await pool.query(`
@@ -118,9 +118,13 @@ router.get('/:id', verifyToken, async (req, res) => {
 //     4. UPDATE PaymentStatus based on amount paid
 //   COMMIT / ROLLBACK
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:id/customer-pay', verifyToken, validatePayment, async (req, res) => {
+router.post('/:id/customer-pay', verifyToken, async (req, res) => {
   const { AmountPaid } = req.body;
   const customerID     = req.user.id;
+
+  if (!AmountPaid || parseFloat(AmountPaid) <= 0) {
+    return res.status(400).json({ error: 'AmountPaid must be greater than 0.' });
+  }
 
   const conn = await pool.getConnection();
   try {
@@ -165,7 +169,7 @@ router.post('/:id/customer-pay', verifyToken, validatePayment, async (req, res) 
     // const momoResult = await callMoMoAPI(AmountPaid, customerPhone);
     // if (!momoResult.success) {
     //   await conn.rollback();
-    //   return res.status(402).json({ error: 'Payment gateway declined the transaction.' });
+    //   return res.status(402).json({ error: 'Payment gateway declined.' });
     // }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -194,10 +198,14 @@ router.post('/:id/customer-pay', verifyToken, validatePayment, async (req, res) 
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/invoices/:id/pay — Record payment (Finance/Billing Staff or Admin)
-// Manager-only endpoint — unchanged, not accessible by customers
+// Staff-only endpoint — unchanged, not accessible by customers
 // ─────────────────────────────────────────────────────────────────────────────
-router.post('/:id/pay', verifyToken, requireFinanceStaff, validatePayment, async (req, res) => {
+router.post('/:id/pay', verifyToken, requireFinanceStaff, async (req, res) => {
   const { AmountPaid } = req.body;
+
+  if (!AmountPaid || parseFloat(AmountPaid) <= 0) {
+    return res.status(400).json({ error: 'AmountPaid must be greater than 0.' });
+  }
 
   const conn = await pool.getConnection();
   try {
