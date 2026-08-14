@@ -1,55 +1,56 @@
-# 🏨 Grand Horizon Hotel — Hotel Reservation & Event Management System
- 
-A full-stack web application for managing hotel room reservations and event bookings, built with **Node.js + Express + MySQL/MariaDB**.
- 
+
 ---
- 
+
 ## 📋 Table of Contents
- 
+
 - [Project Overview](#-project-overview)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
+- [User Roles](#-user-roles)
 - [Prerequisites](#-prerequisites)
-- [Database Setup](#-database-setup)
+- [Database Setup (MariaDB)](#-database-setup-mariadb)
 - [Application Setup](#-application-setup)
 - [Running the App](#-running-the-app)
 - [Using the App](#-using-the-app)
 - [API Endpoints](#-api-endpoints)
 - [Troubleshooting](#-troubleshooting)
- 
+
 ---
- 
+
 ## 📖 Project Overview
- 
+
 The Grand Horizon Hotel system solves the problem of fragmented, isolated hotel management by providing a **single centralised platform** that handles:
- 
+
 - 🛏 **Room Reservations** — search, book, check-in, check-out
 - 🎪 **Event Hall Bookings** — browse halls, book events, manage schedules
 - 🧾 **Invoicing & Payments** — automated invoice generation, payment recording
-- ⭐ **Customer Feedback** — post-sty and post-event reviews
-- 📊 **Manager Dashboard** — real-time KPIs, reports, and analytics
- 
+- ⭐ **Customer Feedback** — post-stay and post-event reviews
+- 📊 **Manager Dashboard** — real-time KPIs, revenue breakdown, reports
+- 👥 **Staff Management** — 4-role access control system
+
 ### Two Interfaces
+
 | Interface | Who Uses It | Purpose |
 |-----------|-------------|---------|
 | 🧳 **Guest Portal** | Hotel customers | Search rooms, make bookings, view invoices |
-| 🏨 **Manager Portal** | Hotel staff | Manage operations, process payments, view reports |
- 
+| 🏨 **Manager Portal** | Hotel staff (all 3 roles) | Manage operations, process payments, view reports |
+
 ---
- 
+
 ## 🛠 Tech Stack
- 
+
 | Layer | Technology |
 |-------|-----------|
 | **Backend** | Node.js 18+, Express.js 4 |
-| **Database** | MySQL 8.0+ or MariaDB 12+ |
-| **Authentication** | JWT (JSON Web Tokens) |
-| **Password Hashing** | bcryptjs |
+| **Database** | MariaDB 12+ |
+| **Authentication** | JWT (JSON Web Tokens, 8-hour expiry) |
+| **Password Hashing** | bcryptjs (12 salt rounds) |
 | **Input Validation** | express-validator |
-| **Frontend** | Vanilla HTML, CSS, JavaScript |
- 
+| **Transactions** | BEGIN / COMMIT / ROLLBACK with FOR UPDATE locking |
+| **Frontend** | Vanilla HTML5, CSS3, JavaScript |
+
 ---
- 
+
 ## 📁 Project Structure
  
 ```
@@ -92,19 +93,30 @@ grand-horizon-hotel/
 ```
  
 ---
- 
+
+## 👥 User Roles
+
+The system implements a **four-tier role-based access control (RBAC)** model:
+
+| Role | Login Endpoint | Middleware | Access Scope |
+|------|---------------|------------|--------------|
+| **Administrator** | `/api/auth/staff/login` | `requireAdmin` | Full system access — staff accounts, rooms, all reservations, events, invoices, all reports |
+| **Event Staff** | `/api/auth/staff/login` | `requireEventStaff` | Event operations — event bookings, hall schedules, event status updates |
+| **Finance/Billing Staff** | `/api/auth/staff/login` | `requireFinanceStaff` | Financial operations — payments, invoices, revenue reports |
+| **Customer** | `/api/auth/login` | `requireCustomer` | Self-service — search, book, view own reservations and invoices, submit feedback |
+
+> ⚠️ Staff accounts are created exclusively by the Administrator. Staff cannot self-register.
+
+---
+
 ## ✅ Prerequisites
- 
-Before you begin, make sure you have the following installed:
- 
+
 ### 1. Node.js (v18 or higher)
-- Download from: https://nodejs.org
-- Choose the **LTS version**
-- Verify installation:
-  ```bash
-  node -v
-  npm -v
-  ```
+- Download from: https://nodejs.org (choose LTS)
+- Verify:
+```bash
+node -v
+npm -v
  
 ### 2.MariaDB 12+
  
@@ -191,10 +203,12 @@ Run this query to confirm everything is set up correctly:
  
 ```sql
 USE grand_horizon_hotel;
- 
+
 SHOW TABLES;
- 
-SELECT 'CUSTOMER'      AS Entity, COUNT(*) AS Records FROM CUSTOMER
+
+SELECT 'STAFF'         AS Entity, COUNT(*) AS Records FROM STAFF
+UNION ALL
+SELECT 'CUSTOMER',      COUNT(*) FROM CUSTOMER
 UNION ALL
 SELECT 'ROOM',          COUNT(*) FROM ROOM
 UNION ALL
@@ -213,6 +227,7 @@ SELECT 'FEEDBACK',      COUNT(*) FROM FEEDBACK;
  
 | Entity | Records |
 |--------|---------|
+| STAFF | 9 |
 | CUSTOMER | 30 |
 | ROOM | 20 |
 | HALL | 7 |
@@ -222,6 +237,25 @@ SELECT 'FEEDBACK',      COUNT(*) FROM FEEDBACK;
 | FEEDBACK | 20 |
  
 ---
+
+## Step 7 — Generate Real Staff Password Hashes
+
+Open CMD in your project folder and run:
+
+```bash
+node -e "const b=require('bcryptjs'); b.hash('Staff@1234',12).then(h=>{ console.log('UPDATE STAFF SET PasswordHash = \'' + h + '\' WHERE IsActive = 1;'); })"
+```
+
+Copy the printed SQL statement and run it in your MariaDB client:
+
+```sql
+USE grand_horizon_hotel;
+UPDATE STAFF SET PasswordHash = '$2b$12$YOUR_REAL_HASH_HERE' WHERE IsActive = 1;
+```
+**Expected output**
+
+✅ All 7 active staff accounts will now accept the password Staff@1234
+
  
 ## ⚙️ Application Setup
  
@@ -335,8 +369,16 @@ npm run dev
 ### 🏨 Manager Portal Features
  
 **Login credentials:**
-- Username: `manager`
-- Password: `manager123`
+
+|Name | Email | Role | Password |
+|-----|-------|------|----------|
+|Daniel Quaye | daniel.quaye@grandhorizon.com  | Administrator |	Staff@1234 |
+|Nana Asiedu | nana.asiedu@grandhorizon.com |	Event Staff |	Staff@1234 |
+|Priscilla Ofori | priscilla.ofori@grandhorizon.com | Event Staff |	Staff@1234 |
+|Michael Antwi | michael.antwi@grandhorizon.com |	Event Staff |	Staff@1234
+|Samuel Kumi | samuel.kumi@grandhorizon.com |	Finance/Billing Staff |	Staff@1234 |
+|Josephine Acheampong |	josephine.acheampong@grandhorizon.com |	Finance/Billing Staff |	Staff@1234 |
+|Richard Opoku | richard.opoku@grandhorizon.com |	Finance/Billing Staff |	Staff@1234 |
  
 1. **Dashboard** — Live KPIs: available rooms, occupied rooms, today's check-ins/outs, revenue
 2. **Room Management** — View all rooms in grid or table view, update room status

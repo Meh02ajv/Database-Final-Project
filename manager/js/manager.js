@@ -7,25 +7,28 @@ let selectedEventId = null;
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
   const token = sessionStorage.getItem('mgr_token');
   if (token) { mgrToken = token; showDashboard(); }
 });
 
 // ===== AUTH =====
 async function doManagerLogin() {
-  const username = document.getElementById('mgr-username').value.trim();
+  const email = document.getElementById('mgr-username').value.trim();
   const password = document.getElementById('mgr-password').value;
-  if (!username || !password) return showLoginAlert('Please enter credentials.', 'danger');
+  if (!email || !password) return showLoginAlert('Please enter credentials.', 'danger');
   try {
-    const res = await fetch(`${API}/auth/manager/login`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+    const res = await fetch(`${API}/auth/staff/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Email: email, Password: password })
     });
     const data = await res.json();
     if (!res.ok) return showLoginAlert(data.error, 'danger');
     mgrToken = data.token;
     sessionStorage.setItem('mgr_token', mgrToken);
+    sessionStorage.setItem('mgr_role', data.role);
+    sessionStorage.setItem('mgr_name', data.FirstName);
     showDashboard();
   } catch { showLoginAlert('Connection error. Is the server running?', 'danger'); }
 }
@@ -94,19 +97,21 @@ function showAlert(msg, type = 'info') {
 
 // ===== HELPERS =====
 const authHeaders = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${mgrToken}` });
-function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }); }
-function fmtDateTime(d) { if (!d) return '—'; return new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+function fmtDateTime(d) { if (!d) return '—'; return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 function statusBadge(s) {
-  return { 'Confirmed':'badge-info', 'Checked-In':'badge-success', 'Checked-Out':'badge-muted',
-           'Cancelled':'badge-danger', 'Completed':'badge-success', 'In Progress':'badge-warning',
-           'Available':'badge-success', 'Reserved':'badge-info', 'Occupied':'badge-warning',
-           'Under Maintenance':'badge-danger' }[s] || 'badge-muted';
+  return {
+    'Confirmed': 'badge-info', 'Checked-In': 'badge-success', 'Checked-Out': 'badge-muted',
+    'Cancelled': 'badge-danger', 'Completed': 'badge-success', 'In Progress': 'badge-warning',
+    'Available': 'badge-success', 'Reserved': 'badge-info', 'Occupied': 'badge-warning',
+    'Under Maintenance': 'badge-danger'
+  }[s] || 'badge-muted';
 }
 function payBadge(s) {
-  return { 'Paid':'badge-success', 'Unpaid':'badge-danger', 'Partially Paid':'badge-warning' }[s] || 'badge-muted';
+  return { 'Paid': 'badge-success', 'Unpaid': 'badge-danger', 'Partially Paid': 'badge-warning' }[s] || 'badge-muted';
 }
 function roomTileColor(s) {
-  return { 'Available':'#16a34a', 'Reserved':'#2563eb', 'Occupied':'#d97706', 'Under Maintenance':'#dc2626' }[s] || '#6b7280';
+  return { 'Available': '#16a34a', 'Reserved': '#2563eb', 'Occupied': '#d97706', 'Under Maintenance': '#dc2626' }[s] || '#6b7280';
 }
 
 // ===== DASHBOARD =====
@@ -164,7 +169,7 @@ async function loadDashboard() {
 
 async function loadTodayActivity() {
   try {
-    const res = await fetch(`${API}/reservations?date=${new Date().toISOString().slice(0,10)}`, { headers: authHeaders() });
+    const res = await fetch(`${API}/reservations?date=${new Date().toISOString().slice(0, 10)}`, { headers: authHeaders() });
     const data = await res.json();
     const checkIns = data.filter(r => new Date(r.CheckInDate).toDateString() === new Date().toDateString());
     const checkOuts = data.filter(r => new Date(r.CheckOutDate).toDateString() === new Date().toDateString());
@@ -179,7 +184,7 @@ async function loadTodayActivity() {
     `).join('') : '<div class="empty-state" style="padding: 0;">No activity today</div>';
     document.getElementById('today-checkins').innerHTML = renderList(checkIns, 'in');
     document.getElementById('today-checkouts').innerHTML = renderList(checkOuts, 'out');
-  } catch {}
+  } catch { }
 }
 
 // ===== ROOMS =====
@@ -282,7 +287,7 @@ async function loadReservations() {
 }
 
 function clearResFilters() {
-  ['res-search','res-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  ['res-search', 'res-date'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('res-status').value = '';
   loadReservations();
 }
@@ -353,7 +358,7 @@ async function loadEvents() {
 }
 
 function clearEvtFilters() {
-  ['evt-search','evt-date'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  ['evt-search', 'evt-date'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('evt-status').value = '';
   loadEvents();
 }
@@ -452,8 +457,8 @@ async function confirmPayment() {
 
 // ===== REPORTS =====
 async function loadReports() {
-  const from = document.getElementById('rpt-from').value || new Date(new Date().setDate(1)).toISOString().slice(0,10);
-  const to = document.getElementById('rpt-to').value || new Date().toISOString().slice(0,10);
+  const from = document.getElementById('rpt-from').value || new Date(new Date().setDate(1)).toISOString().slice(0, 10);
+  const to = document.getElementById('rpt-to').value || new Date().toISOString().slice(0, 10);
   document.getElementById('reports-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   try {
     const [occRes, revRes, fbRes] = await Promise.all([
@@ -473,15 +478,15 @@ async function loadReports() {
           <div style="display:flex; flex-direction:column; gap:0.5rem;">
             <div style="display:flex; justify-content:space-between; padding: 0; border-bottom:1px solid var(--border);">
               <span style="color:var(--text-muted);">Total Paid</span>
-              <strong style="color:var(--success);">$${parseFloat(rev.totals?.TotalPaid||0).toLocaleString()}</strong>
+              <strong style="color:var(--success);">$${parseFloat(rev.totals?.TotalPaid || 0).toLocaleString()}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; padding: 0; border-bottom:1px solid var(--border);">
               <span style="color:var(--text-muted);">Outstanding</span>
-              <strong style="color:var(--danger);">$${parseFloat(rev.totals?.TotalUnpaid||0).toLocaleString()}</strong>
+              <strong style="color:var(--danger);">$${parseFloat(rev.totals?.TotalUnpaid || 0).toLocaleString()}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; padding: 0;">
               <span style="color:var(--text-muted);">Partially Paid</span>
-              <strong style="color:var(--warning);">$${parseFloat(rev.totals?.TotalPartial||0).toLocaleString()}</strong>
+              <strong style="color:var(--warning);">$${parseFloat(rev.totals?.TotalPartial || 0).toLocaleString()}</strong>
             </div>
           </div>
         </div>
@@ -492,10 +497,10 @@ async function loadReports() {
             <div style="color:var(--text-muted); font-size:0.85rem;">Average Rating (${fb.Total || 0} reviews)</div>
           </div>
           <div style="display:flex; justify-content:space-around; font-size:0.82rem;">
-            <div style="text-align:center;"><div style="font-weight:700; color:var(--success);">${fb.Excellent||0}</div><div style="color:var(--text-muted);">Excellent</div></div>
-            <div style="text-align:center;"><div style="font-weight:700; color:#16a34a;">${fb.Good||0}</div><div style="color:var(--text-muted);">Good</div></div>
-            <div style="text-align:center;"><div style="font-weight:700; color:var(--warning);">${fb.Average||0}</div><div style="color:var(--text-muted);">Average</div></div>
-            <div style="text-align:center;"><div style="font-weight:700; color:var(--danger);">${fb.Poor||0}</div><div style="color:var(--text-muted);">Poor</div></div>
+            <div style="text-align:center;"><div style="font-weight:700; color:var(--success);">${fb.Excellent || 0}</div><div style="color:var(--text-muted);">Excellent</div></div>
+            <div style="text-align:center;"><div style="font-weight:700; color:#16a34a;">${fb.Good || 0}</div><div style="color:var(--text-muted);">Good</div></div>
+            <div style="text-align:center;"><div style="font-weight:700; color:var(--warning);">${fb.Average || 0}</div><div style="color:var(--text-muted);">Average</div></div>
+            <div style="text-align:center;"><div style="font-weight:700; color:var(--danger);">${fb.Poor || 0}</div><div style="color:var(--text-muted);">Poor</div></div>
           </div>
         </div>
         <div class="report-card">
@@ -517,7 +522,7 @@ async function loadReports() {
               <div class="chart-bar-row">
                 <div class="chart-bar-label">${m.Month}</div>
                 <div class="chart-bar-track">
-                  <div class="chart-bar-fill" style="width:${Math.round((parseFloat(m.Total)/maxRev)*100)}%">
+                  <div class="chart-bar-fill" style="width:${Math.round((parseFloat(m.Total) / maxRev) * 100)}%">
                     <span>$${parseFloat(m.Total).toLocaleString()}</span>
                   </div>
                 </div>

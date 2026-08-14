@@ -30,14 +30,16 @@ router.get('/dashboard', verifyToken, requireStaff, async (req, res) => {
       SELECT
         SUM(DATE(CheckInDate)  = CURDATE()) AS TodayCheckIns,
         SUM(DATE(CheckOutDate) = CURDATE()) AS TodayCheckOuts
-      FROM RESERVATION
-      WHERE Status IN ('Confirmed', 'Checked-In', 'Checked-Out')
+      FROM RESERVATION WHERE Status IN ('Confirmed','Checked-In','Checked-Out')
     `);
 
     const [[revenue]] = await pool.query(`
       SELECT
-        COALESCE(SUM(TotalAmount), 0)                                              AS TotalRevenue,
-        COALESCE(SUM(CASE WHEN PaymentStatus = 'Unpaid' THEN TotalAmount ELSE 0 END), 0) AS OutstandingBalance
+        COALESCE(SUM(RoomCharges),       0)                                              AS TotalRoomRevenue,
+        COALESCE(SUM(EventCharges),      0)                                              AS TotalEventRevenue,
+        COALESCE(SUM(AdditionalCharges), 0)                                              AS TotalAdditionalRevenue,
+        COALESCE(SUM(TotalAmount),       0)                                              AS TotalRevenue,
+        COALESCE(SUM(CASE WHEN PaymentStatus='Unpaid' THEN TotalAmount ELSE 0 END), 0)  AS OutstandingBalance
       FROM INVOICE
     `);
 
@@ -81,7 +83,6 @@ router.get('/occupancy', verifyToken, requireStaff, async (req, res) => {
   const endDate   = to   || new Date().toISOString().slice(0, 10);
 
   try {
-    // Breakdown by room category
     const [byCategory] = await pool.query(`
       SELECT
         rc.CategoryName,
@@ -99,7 +100,6 @@ router.get('/occupancy', verifyToken, requireStaff, async (req, res) => {
       ORDER BY Revenue DESC
     `, [startDate, endDate]);
 
-    // Overdue check-outs
     const [overdue] = await pool.query(`
       SELECT
         res.ReservationID,
@@ -133,7 +133,6 @@ router.get('/occupancy', verifyToken, requireStaff, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/revenue', verifyToken, requireFinanceStaff, async (req, res) => {
   try {
-    // Monthly breakdown (last 12 months)
     const [monthly] = await pool.query(`
       SELECT
         DATE_FORMAT(IssuedDate, '%Y-%m')    AS Month,
@@ -150,7 +149,6 @@ router.get('/revenue', verifyToken, requireFinanceStaff, async (req, res) => {
       LIMIT 12
     `);
 
-    // Overall payment status totals
     const [[totals]] = await pool.query(`
       SELECT
         COALESCE(SUM(CASE WHEN PaymentStatus = 'Paid'           THEN TotalAmount END), 0) AS TotalPaid,

@@ -15,7 +15,7 @@ const { validateReservation } = require('../middleware/validate');
 //     4. Calculate room charges
 //     5. INSERT into INVOICE
 //     6. UPDATE ROOM status → 'Reserved'
-//   COMMIT  ← all 3 writes succeed together
+//   COMMIT  ← all writes succeed together
 //   ROLLBACK ← if any step fails, nothing is persisted
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/', verifyToken, validateReservation, async (req, res) => {
@@ -181,8 +181,10 @@ router.get('/', verifyToken, requireStaff, async (req, res) => {
 // TRANSACTION SCOPE:
 //   BEGIN
 //     1. Lock + validate reservation (FOR UPDATE)
-//     2. UPDATE RESERVATION → Checked-In
-//     3. UPDATE ROOM → Occupied
+//     2. Validate reservation status is Confirmed
+//     3. Validate current date/time >= CheckInDate  ← NEW
+//     4. UPDATE RESERVATION → Checked-In
+//     5. UPDATE ROOM → Occupied
 //   COMMIT / ROLLBACK
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/:id/checkin', verifyToken, requireStaff, async (req, res) => {
@@ -201,6 +203,21 @@ router.put('/:id/checkin', verifyToken, requireStaff, async (req, res) => {
     if (rows[0].Status !== 'Confirmed') {
       await conn.rollback();
       return res.status(400).json({ error: 'Reservation must be Confirmed to check in.' });
+    }
+
+    // ── Validate check-in date ────────────────────────────────────────────────
+    // Only allow check-in when the current date/time has reached the CheckInDate.
+    const now         = new Date();
+    const checkInDate = new Date(rows[0].CheckInDate);
+    if (now < checkInDate) {
+      await conn.rollback();
+      const formatted = checkInDate.toLocaleString('en-GB', {
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      return res.status(400).json({
+        error: `Check-in is not allowed yet. This reservation's check-in date is ${formatted}. Please wait until then.`
+      });
     }
 
     await conn.query(
