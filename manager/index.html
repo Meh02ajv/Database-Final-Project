@@ -1,463 +1,455 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grand Horizon Hotel — Manager Portal</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>">
 </head>
-
 <body>
 
-  <!-- ===== LOGIN SCREEN ===== -->
-  <div id="login-screen" class="login-screen" style="width:100%;">
-    <div class="login-box">
-      <h1>🏨 Manager Portal</h1>
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" class="login-screen" style="width:100%;">
+  <div class="login-box">
+    <div style="text-align:center; margin-bottom:1.25rem;">
+      <div style="font-size:2.5rem;">🏨</div>
+      <h1>Manager Portal</h1>
       <p>Grand Horizon Hotel — Staff Access Only</p>
-      <div id="login-alert"></div>
-      <div style="display:flex; flex-direction:column; gap:1rem;">
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="mgr-username" placeholder="your@grandhorizon.com">
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="mgr-password" placeholder="••••••••" value="manager123">
-        </div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="doManagerLogin()">Login to
-          Dashboard</button>
-      </div>
-      <p style="text-align:center; margin-top:1.25rem; font-size:0.82rem; color:var(--text-muted);">
-        <a href="/client" style="color:var(--primary-light);">← Guest Portal</a>
-      </p>
     </div>
+    <div id="login-alert"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="mgr-username" placeholder="your@grandhorizon.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="mgr-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:0.75rem;" onclick="doManagerLogin()">Login to Dashboard</button>
+    </div>
+    <p style="text-align:center; margin-top:1.25rem; font-size:0.82rem; color:var(--text-muted);">
+      <a href="/client" style="color:var(--primary-light);">← Guest Portal</a>
+    </p>
   </div>
+</div>
 
-  <!-- ===== DASHBOARD LAYOUT ===== -->
-  <div id="dashboard" style="display:none; width:100%; display:none;">
+<!-- ===== DASHBOARD LAYOUT ===== -->
+<div id="dashboard" style="display:none; width:100%;">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <h1>🏨 Grand Horizon</h1>
-        <p>Manager Portal</p>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>🏨 Grand Horizon</h1>
+      <p id="sidebar-role-label">Manager Portal</p>
+    </div>
+
+    <!-- ADMINISTRATOR NAV -->
+    <nav class="sidebar-nav" id="nav-admin" style="display:none;">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showSection('dashboard-home', this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="nav-section">Staff</div>
+      <div class="nav-item" onclick="showSection('section-staff', this)"><span class="icon">👥</span> Staff Management</div>
+      <div class="nav-section">Operations</div>
+      <div class="nav-item" onclick="showSection('section-rooms', this)"><span class="icon">🛏</span> Rooms</div>
+      <div class="nav-item" onclick="showSection('section-reservations', this)"><span class="icon">📋</span> Reservations</div>
+      <div class="nav-item" onclick="showSection('section-events', this)"><span class="icon">🎪</span> Events</div>
+      <div class="nav-section">Finance</div>
+      <div class="nav-item" onclick="showSection('section-invoices', this)"><span class="icon">🧾</span> Invoices</div>
+      <div class="nav-section">Insights</div>
+      <div class="nav-item" onclick="showSection('section-reports', this)"><span class="icon">📈</span> Reports</div>
+      <div class="nav-item" onclick="showSection('section-feedback', this)"><span class="icon">⭐</span> Feedback</div>
+    </nav>
+
+    <!-- EVENT STAFF NAV -->
+    <nav class="sidebar-nav" id="nav-event" style="display:none;">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showSection('dashboard-home', this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="nav-section">Operations</div>
+      <div class="nav-item" onclick="showSection('section-reservations', this)"><span class="icon">📋</span> Reservations</div>
+      <div class="nav-item" onclick="showSection('section-events', this)"><span class="icon">🎪</span> Events</div>
+      <div class="nav-section">Insights</div>
+      <div class="nav-item" onclick="showSection('section-reports', this)"><span class="icon">📈</span> Reports</div>
+      <div class="nav-item" onclick="showSection('section-feedback', this)"><span class="icon">⭐</span> Feedback</div>
+    </nav>
+
+    <!-- FINANCE STAFF NAV -->
+    <nav class="sidebar-nav" id="nav-finance" style="display:none;">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showSection('dashboard-home', this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="nav-section">Finance</div>
+      <div class="nav-item" onclick="showSection('section-invoices', this)"><span class="icon">🧾</span> Invoices</div>
+      <div class="nav-section">Insights</div>
+      <div class="nav-item" onclick="showSection('section-reports', this)"><span class="icon">📈</span> Reports</div>
+      <div class="nav-item" onclick="showSection('section-feedback', this)"><span class="icon">⭐</span> Feedback</div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size:0.78rem; color:rgba(255,255,255,0.45); margin-bottom:0.5rem; text-align:center;" id="sidebar-user-info"></div>
+      <button onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <span id="topbar-date"></span>
+        <span class="manager-badge" id="topbar-role-badge">👤 Staff</span>
       </div>
-      <nav class="sidebar-nav">
-        <div class="nav-section">Overview</div>
-        <div class="nav-item active" onclick="showSection('dashboard-home', this)">
-          <span class="icon">📊</span> Dashboard
-        </div>
-        <div class="nav-section">Operations</div>
-        <div class="nav-item" onclick="showSection('section-rooms', this)">
-          <span class="icon">🛏</span> Rooms
-        </div>
-        <div class="nav-item" onclick="showSection('section-reservations', this)">
-          <span class="icon">📋</span> Reservations
-        </div>
-        <div class="nav-item" onclick="showSection('section-events', this)">
-          <span class="icon">🎪</span> Events
-        </div>
-        <div class="nav-section">Finance</div>
-        <div class="nav-item" onclick="showSection('section-invoices', this)">
-          <span class="icon">🧾</span> Invoices
-        </div>
-        <div class="nav-section">Insights</div>
-        <div class="nav-item" onclick="showSection('section-reports', this)">
-          <span class="icon">📈</span> Reports
-        </div>
-        <div class="nav-item" onclick="showSection('section-feedback', this)">
-          <span class="icon">⭐</span> Feedback
-        </div>
-      </nav>
-      <div class="sidebar-footer">
-        <button onclick="doLogout()">🚪 Logout</button>
-      </div>
-    </aside>
+    </div>
 
-    <!-- MAIN -->
-    <div class="main">
-      <div class="topbar">
-        <div class="topbar-title" id="topbar-title">Dashboard</div>
-        <div class="topbar-right">
-          <span id="topbar-date"></span>
-          <span class="manager-badge">👤 Manager</span>
+    <div class="content">
+
+      <!-- ===== DASHBOARD HOME (ALL ROLES) ===== -->
+      <div id="dashboard-home" class="section active">
+        <div class="section-header">
+          <h2 id="dashboard-greeting">📊 Dashboard</h2>
+          <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
         </div>
-      </div>
-
-      <div class="content">
-
-        <!-- ===== DASHBOARD HOME ===== -->
-        <div id="dashboard-home" class="section active">
-          <div class="section-header">
-            <h2>📊 Operations Dashboard</h2>
-            <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
-          </div>
-          <div id="stats-grid" class="stats-grid">
-            <div class="loading">
-              <div class="spinner"></div>
-            </div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:0.5rem;">
-            <div class="table-wrap">
-              <div class="table-header">
-                <h3>📅 Today's Check-Ins</h3>
-              </div>
-              <div id="today-checkins" style="padding:1rem;">
-                <div class="loading">
-                  <div class="spinner"></div>
-                </div>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <div class="table-header">
-                <h3>🚪 Today's Check-Outs</h3>
-              </div>
-              <div id="today-checkouts" style="padding:1rem;">
-                <div class="loading">
-                  <div class="spinner"></div>
-                </div>
-              </div>
-            </div>
+        <div id="role-welcome-banner" style="margin-bottom:1.5rem; border-radius:10px; padding:1.25rem 1.5rem; color:white; display:flex; align-items:center; gap:1rem;">
+          <div style="font-size:2.5rem;" id="banner-icon">🏨</div>
+          <div>
+            <div style="font-size:1.1rem; font-weight:700;" id="banner-title">Welcome</div>
+            <div style="font-size:0.88rem; opacity:0.85;" id="banner-subtitle">Grand Horizon Hotel</div>
           </div>
         </div>
+        <div id="stats-grid" class="stats-grid"><div class="loading"><div class="spinner"></div></div></div>
+        <div id="today-activity" style="display:none; grid-template-columns:1fr 1fr; gap:1.25rem; margin-top:1.25rem;">
+          <div class="table-wrap">
+            <div class="table-header"><h3>📅 Today's Check-Ins</h3></div>
+            <div id="today-checkins" style="padding:1rem;"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-wrap">
+            <div class="table-header"><h3>🚪 Today's Check-Outs</h3></div>
+            <div id="today-checkouts" style="padding:1rem;"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div id="finance-summary" style="display:none; margin-top:1.25rem;">
+          <div class="table-wrap">
+            <div class="table-header"><h3>💰 Revenue Breakdown</h3></div>
+            <div id="revenue-breakdown-cards" style="padding:1.25rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem;"></div>
+          </div>
+        </div>
+      </div>
 
-        <!-- ===== ROOMS ===== -->
-        <div id="section-rooms" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>🛏 Room Management</h2>
+      <!-- ===== STAFF MANAGEMENT (ADMIN ONLY) ===== -->
+      <div id="section-staff" class="section" style="display:none;">
+        <div class="section-header">
+          <h2>👥 Staff Management</h2>
+          <button class="btn btn-primary btn-sm" onclick="openCreateStaff()">➕ Add Staff</button>
+        </div>
+        <div class="filters-bar">
+          <select id="staff-role-filter" onchange="loadStaff()">
+            <option value="">All Roles</option>
+            <option value="Administrator">Administrator</option>
+            <option value="Event Staff">Event Staff</option>
+            <option value="Finance/Billing Staff">Finance/Billing Staff</option>
+          </select>
+          <select id="staff-active-filter" onchange="loadStaff()">
+            <option value="">All Status</option>
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="staff-table-body"><tr><td colspan="7" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ROOMS (ADMIN ONLY) ===== -->
+      <div id="section-rooms" class="section" style="display:none;">
+        <div class="section-header">
+          <h2>🛏 Room Management</h2>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-primary btn-sm" onclick="openCreateRoom()">➕ Add New Room</button>
             <button class="btn btn-outline btn-sm" onclick="loadRooms()">🔄 Refresh</button>
           </div>
-          <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('rooms-grid-view', this)">Grid View</button>
-            <button class="tab-btn" onclick="switchTab('rooms-table-view', this)">Table View</button>
-          </div>
-          <div id="rooms-grid-view">
-            <div id="room-grid-container" class="room-grid">
-              <div class="loading">
-                <div class="spinner"></div>
-              </div>
-            </div>
-          </div>
-          <div id="rooms-table-view" style="display:none;">
-            <div class="table-wrap">
-              <div class="table-header">
-                <h3>All Rooms</h3>
-                <div style="display:flex; gap:0.5rem;">
-                  <select id="room-status-filter" onchange="loadRooms()">
-                    <option value="">All Statuses</option>
-                    <option>Available</option>
-                    <option>Reserved</option>
-                    <option>Occupied</option>
-                    <option>Under Maintenance</option>
-                  </select>
-                </div>
-              </div>
-              <div style="overflow-x:auto;">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Room</th>
-                      <th>Category</th>
-                      <th>Floor</th>
-                      <th>Max Occ.</th>
-                      <th>Price/Night</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rooms-table-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
         </div>
-
-        <!-- ===== RESERVATIONS ===== -->
-        <div id="section-reservations" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>📋 Reservations</h2>
-          </div>
-          <div class="filters-bar">
-            <input type="text" id="res-search" placeholder="🔍 Search guest or reference..." style="min-width:220px;"
-              oninput="loadReservations()">
-            <select id="res-status" onchange="loadReservations()">
-              <option value="">All Statuses</option>
-              <option>Confirmed</option>
-              <option>Checked-In</option>
-              <option>Checked-Out</option>
-              <option>Cancelled</option>
-            </select>
-            <input type="date" id="res-date" onchange="loadReservations()">
-            <button class="btn btn-outline btn-sm" onclick="clearResFilters()">Clear</button>
-          </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('rooms-grid-view', this)">Grid View</button>
+          <button class="tab-btn" onclick="switchTab('rooms-table-view', this)">Table View</button>
+        </div>
+        <div id="rooms-grid-view">
+          <div id="room-grid-container" class="room-grid"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+        <div id="rooms-table-view" style="display:none;">
           <div class="table-wrap">
+            <div class="table-header">
+              <h3>All Rooms</h3>
+              <select id="room-status-filter" onchange="loadRooms()">
+                <option value="">All Statuses</option>
+                <option>Available</option><option>Reserved</option>
+                <option>Occupied</option><option>Under Maintenance</option>
+              </select>
+            </div>
             <div style="overflow-x:auto;">
               <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Reference</th>
-                    <th>Guest</th>
-                    <th>Room</th>
-                    <th>Check-In</th>
-                    <th>Check-Out</th>
-                    <th>Guests</th>
-                    <th>Status</th>
-                    <th>Invoice</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="reservations-table-body">
-                  <tr>
-                    <td colspan="10" class="loading">
-                      <div class="spinner"></div>
-                    </td>
-                  </tr>
-                </tbody>
+                <thead><tr><th>Room</th><th>Category</th><th>Floor</th><th>Max Occ.</th><th>Price/Night</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="rooms-table-body"></tbody>
               </table>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- ===== EVENTS ===== -->
-        <div id="section-events" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>🎪 Event Bookings</h2>
-          </div>
-          <div class="filters-bar">
-            <input type="text" id="evt-search" placeholder="🔍 Search customer or event type..."
-              style="min-width:220px;" oninput="loadEvents()">
-            <select id="evt-status" onchange="loadEvents()">
-              <option value="">All Statuses</option>
-              <option>Confirmed</option>
-              <option>In Progress</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
-            </select>
-            <input type="date" id="evt-date" onchange="loadEvents()">
-            <button class="btn btn-outline btn-sm" onclick="clearEvtFilters()">Clear</button>
-          </div>
-          <div class="table-wrap">
-            <div style="overflow-x:auto;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Hall</th>
-                    <th>Event Type</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Attendees</th>
-                    <th>Status</th>
-                    <th>Invoice</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="events-table-body">
-                  <tr>
-                    <td colspan="10" class="loading">
-                      <div class="spinner"></div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+      <!-- ===== RESERVATIONS (ADMIN + EVENT STAFF) ===== -->
+      <div id="section-reservations" class="section" style="display:none;">
+        <div class="section-header"><h2>📋 Reservations</h2></div>
+        <div class="filters-bar">
+          <input type="text" id="res-search" placeholder="🔍 Search guest or reference..." style="min-width:220px;" oninput="loadReservations()">
+          <select id="res-status" onchange="loadReservations()">
+            <option value="">All Statuses</option>
+            <option>Confirmed</option><option>Checked-In</option>
+            <option>Checked-Out</option><option>Cancelled</option>
+          </select>
+          <input type="date" id="res-date" onchange="loadReservations()">
+          <button class="btn btn-outline btn-sm" onclick="clearResFilters()">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Reference</th><th>Guest</th><th>Room</th><th>Check-In</th><th>Check-Out</th><th>Guests</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
+              <tbody id="reservations-table-body"><tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
           </div>
         </div>
+      </div>
 
-        <!-- ===== INVOICES ===== -->
-        <div id="section-invoices" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>🧾 Invoice Management</h2>
-          </div>
-          <div class="filters-bar">
-            <input type="text" id="inv-search" placeholder="🔍 Search customer..." style="min-width:200px;"
-              oninput="loadInvoices()">
-            <select id="inv-status" onchange="loadInvoices()">
-              <option value="">All Payment Statuses</option>
-              <option>Unpaid</option>
-              <option>Partially Paid</option>
-              <option>Paid</option>
-            </select>
-            <select id="inv-type" onchange="loadInvoices()">
-              <option value="">All Types</option>
-              <option value="room">Room Reservations</option>
-              <option value="event">Event Bookings</option>
-            </select>
-            <button class="btn btn-outline btn-sm" onclick="clearInvFilters()">Clear</button>
-          </div>
-          <div class="table-wrap">
-            <div style="overflow-x:auto;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Type</th>
-                    <th>Reference</th>
-                    <th>Room</th>
-                    <th>Event</th>
-                    <th>Additional</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="invoices-table-body">
-                  <tr>
-                    <td colspan="10" class="loading">
-                      <div class="spinner"></div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+      <!-- ===== EVENTS (ADMIN + EVENT STAFF) ===== -->
+      <div id="section-events" class="section" style="display:none;">
+        <div class="section-header"><h2>🎪 Event Bookings</h2></div>
+        <div class="filters-bar">
+          <input type="text" id="evt-search" placeholder="🔍 Search customer or event type..." style="min-width:220px;" oninput="loadEvents()">
+          <select id="evt-status" onchange="loadEvents()">
+            <option value="">All Statuses</option>
+            <option>Confirmed</option><option>In Progress</option>
+            <option>Completed</option><option>Cancelled</option>
+          </select>
+          <input type="date" id="evt-date" onchange="loadEvents()">
+          <button class="btn btn-outline btn-sm" onclick="clearEvtFilters()">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Customer</th><th>Hall</th><th>Event Type</th><th>Date</th><th>Time</th><th>Attendees</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
+              <tbody id="events-table-body"><tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
           </div>
         </div>
+      </div>
 
-        <!-- ===== REPORTS ===== -->
-        <div id="section-reports" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>📈 Reports & Analytics</h2>
-            <div style="display:flex; gap:0.5rem; align-items:center;">
-              <input type="date" id="rpt-from">
-              <span style="color:var(--text-muted);">to</span>
-              <input type="date" id="rpt-to">
-              <button class="btn btn-primary btn-sm" onclick="loadReports()">Generate</button>
-            </div>
-          </div>
-          <div id="reports-content">
-            <div class="loading">
-              <div class="spinner"></div>
-            </div>
+      <!-- ===== INVOICES (ADMIN + FINANCE STAFF) ===== -->
+      <div id="section-invoices" class="section" style="display:none;">
+        <div class="section-header"><h2>🧾 Invoice Management</h2></div>
+        <div class="filters-bar">
+          <input type="text" id="inv-search" placeholder="🔍 Search customer..." style="min-width:200px;" oninput="loadInvoices()">
+          <select id="inv-status" onchange="loadInvoices()">
+            <option value="">All Payment Statuses</option>
+            <option>Unpaid</option><option>Partially Paid</option><option>Paid</option>
+          </select>
+          <select id="inv-type" onchange="loadInvoices()">
+            <option value="">All Types</option>
+            <option value="room">Room Reservations</option>
+            <option value="event">Event Bookings</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="clearInvFilters()">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Customer</th><th>Type</th><th>Reference</th><th>Room</th><th>Event</th><th>Additional</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="invoices-table-body"><tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
           </div>
         </div>
+      </div>
 
-        <!-- ===== FEEDBACK ===== -->
-        <div id="section-feedback" class="section" style="display:none;">
-          <div class="section-header">
-            <h2>⭐ Customer Feedback</h2>
-          </div>
-          <div class="filters-bar">
-            <select id="fb-rating-filter" onchange="loadFeedback()">
-              <option value="">All Ratings</option>
-              <option value="5">⭐⭐⭐⭐⭐ Excellent (5)</option>
-              <option value="4">⭐⭐⭐⭐ Good (4)</option>
-              <option value="3">⭐⭐⭐ Average (3)</option>
-              <option value="2">⭐⭐ Poor (2)</option>
-              <option value="1">⭐ Very Poor (1)</option>
-            </select>
-            <select id="fb-type-filter" onchange="loadFeedback()">
-              <option value="">All Types</option>
-              <option value="room">Room Stay</option>
-              <option value="event">Event</option>
-            </select>
-          </div>
-          <div id="feedback-summary-bar" style="margin-bottom:1.25rem;"></div>
-          <div class="table-wrap">
-            <div style="overflow-x:auto;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Type</th>
-                    <th>Reference</th>
-                    <th>Rating</th>
-                    <th>Comments</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody id="feedback-table-body">
-                  <tr>
-                    <td colspan="7" class="loading">
-                      <div class="spinner"></div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+      <!-- ===== REPORTS (ALL ROLES) ===== -->
+      <div id="section-reports" class="section" style="display:none;">
+        <div class="section-header">
+          <h2>📈 Reports & Analytics</h2>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="date" id="rpt-from">
+            <span style="color:var(--text-muted);">to</span>
+            <input type="date" id="rpt-to">
+            <button class="btn btn-primary btn-sm" onclick="loadReports()">Generate</button>
           </div>
         </div>
+        <div id="reports-content"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
 
-      </div><!-- /content -->
-    </div><!-- /main -->
-  </div><!-- /dashboard -->
+      <!-- ===== FEEDBACK (ALL ROLES) ===== -->
+      <div id="section-feedback" class="section" style="display:none;">
+        <div class="section-header"><h2>⭐ Customer Feedback</h2></div>
+        <div class="filters-bar">
+          <select id="fb-rating-filter" onchange="loadFeedback()">
+            <option value="">All Ratings</option>
+            <option value="5">⭐⭐⭐⭐⭐ Excellent (5)</option>
+            <option value="4">⭐⭐⭐⭐ Good (4)</option>
+            <option value="3">⭐⭐⭐ Average (3)</option>
+            <option value="2">⭐⭐ Poor (2)</option>
+            <option value="1">⭐ Very Poor (1)</option>
+          </select>
+          <select id="fb-type-filter" onchange="loadFeedback()">
+            <option value="">All Types</option>
+            <option value="room">Room Stay</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div id="feedback-summary-bar" style="margin-bottom:1.25rem;"></div>
+        <div class="table-wrap">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>ID</th><th>Customer</th><th>Type</th><th>Reference</th><th>Rating</th><th>Comments</th><th>Date</th></tr></thead>
+              <tbody id="feedback-table-body"><tr><td colspan="7" class="loading"><div class="spinner"></div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-  <!-- ===== MODALS ===== -->
+    </div>
+  </div>
+</div>
 
-  <!-- ROOM STATUS MODAL -->
-  <div class="modal-overlay" id="modal-room-status">
-    <div class="modal">
-      <h2>🛏 Update Room Status</h2>
-      <div id="room-status-alert"></div>
-      <p id="room-status-info" style="margin-bottom:1rem; color:var(--text-muted);"></p>
+<!-- ===== MODALS ===== -->
+
+<!-- CREATE / EDIT STAFF MODAL -->
+<div class="modal-overlay" id="modal-staff-form">
+  <div class="modal">
+    <h2 id="staff-modal-title">👥 Add Staff Member</h2>
+    <div id="staff-form-alert"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group"><label>First Name</label><input type="text" id="staff-firstname" placeholder="James"></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="staff-lastname" placeholder="Osei"></div>
+      </div>
+      <div class="form-group"><label>Email Address</label><input type="email" id="staff-email" placeholder="james@grandhorizon.com"></div>
+      <div class="form-group" id="staff-password-group">
+        <label>Password</label>
+        <input type="password" id="staff-password" placeholder="Min. 6 characters">
+      </div>
       <div class="form-group">
-        <label>New Status</label>
-        <select id="new-room-status">
-          <option>Available</option>
-          <option>Reserved</option>
-          <option>Occupied</option>
-          <option>Under Maintenance</option>
+        <label>Role</label>
+        <select id="staff-role">
+          <option value="Administrator">Administrator</option>
+          <option value="Event Staff">Event Staff</option>
+          <option value="Finance/Billing Staff">Finance/Billing Staff</option>
         </select>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('modal-room-status')">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmRoomStatus()">Update</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAYMENT MODAL -->
-  <div class="modal-overlay" id="modal-payment">
-    <div class="modal">
-      <h2>💳 Record Payment</h2>
-      <div id="payment-alert"></div>
-      <div id="payment-info" style="background:var(--bg); border-radius:8px; padding:1rem; margin-bottom:1rem;"></div>
-      <div class="form-group">
-        <label>Amount Paid ($)</label>
-        <input type="number" id="payment-amount" min="0.01" step="0.01" placeholder="0.00">
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('modal-payment')">Cancel</button>
-        <button class="btn btn-success" onclick="confirmPayment()">✅ Record Payment</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- EVENT STATUS MODAL -->
-  <div class="modal-overlay" id="modal-event-status">
-    <div class="modal">
-      <h2>🎪 Update Event Status</h2>
-      <div id="event-status-alert"></div>
-      <p id="event-status-info" style="margin-bottom:1rem; color:var(--text-muted);"></p>
-      <div class="form-group">
-        <label>New Status</label>
-        <select id="new-event-status">
-          <option>Confirmed</option>
-          <option>In Progress</option>
-          <option>Completed</option>
-          <option>Cancelled</option>
+      <div class="form-group" id="staff-active-group" style="display:none;">
+        <label>Account Status</label>
+        <select id="staff-active">
+          <option value="1">Active</option>
+          <option value="0">Inactive (Deactivated)</option>
         </select>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('modal-event-status')">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmEventStatus()">Update</button>
-      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-staff-form')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStaff()">💾 Save</button>
     </div>
   </div>
+</div>
 
-  <!-- GLOBAL ALERT -->
-  <div id="global-alert"
-    style="display:none; position:fixed; bottom:1.5rem; right:1.5rem; z-index:300; min-width:280px; max-width:400px;">
-    <div class="alert" id="global-alert-msg"></div>
+<!-- CREATE / EDIT ROOM MODAL -->
+<div class="modal-overlay" id="modal-room-form">
+  <div class="modal">
+    <h2 id="room-modal-title">🛏 Create New Room</h2>
+    <div id="room-form-alert"></div>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div class="form-group"><label>Room Number</label><input type="text" id="room-form-roomnumber" placeholder="e.g. 101, 202A"></div>
+      <div class="form-group"><label>Room Category</label><select id="room-form-category"></select></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group"><label>Floor</label><input type="number" id="room-form-floor" min="0" placeholder="e.g. 1"></div>
+        <div class="form-group"><label>Max Occupants</label><input type="number" id="room-form-maxocc" min="1" placeholder="e.g. 2"></div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="room-form-status">
+          <option value="Available">Available</option>
+          <option value="Reserved">Reserved</option>
+          <option value="Occupied">Occupied</option>
+          <option value="Under Maintenance">Under Maintenance</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-room-form')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRoom()">💾 Save Room</button>
+    </div>
   </div>
+</div>
 
-  <script src="js/manager.js"></script>
+<!-- ROOM STATUS MODAL -->
+<div class="modal-overlay" id="modal-room-status">
+  <div class="modal">
+    <h2>🛏 Update Room Status</h2>
+    <div id="room-status-alert"></div>
+    <p id="room-status-info" style="margin-bottom:1rem; color:var(--text-muted);"></p>
+    <div class="form-group">
+      <label>New Status</label>
+      <select id="new-room-status">
+        <option>Available</option><option>Reserved</option>
+        <option>Occupied</option><option>Under Maintenance</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-room-status')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRoomStatus()">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <h2>💳 Record Payment</h2>
+    <div id="payment-alert"></div>
+    <div id="payment-info" style="background:var(--bg); border-radius:8px; padding:1rem; margin-bottom:1rem;"></div>
+    <div class="form-group">
+      <label>Amount Paid ($)</label>
+      <input type="number" id="payment-amount" min="0.01" step="0.01" placeholder="0.00">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-payment')">Cancel</button>
+      <button class="btn btn-success" onclick="confirmPayment()">✅ Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT STATUS MODAL -->
+<div class="modal-overlay" id="modal-event-status">
+  <div class="modal">
+    <h2>🎪 Update Event Status</h2>
+    <div id="event-status-alert"></div>
+    <p id="event-status-info" style="margin-bottom:1rem; color:var(--text-muted);"></p>
+    <div class="form-group">
+      <label>New Status</label>
+      <select id="new-event-status">
+        <option>Confirmed</option><option>In Progress</option>
+        <option>Completed</option><option>Cancelled</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-event-status')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEventStatus()">Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL ALERT -->
+<div id="global-alert" style="display:none; position:fixed; bottom:1.5rem; right:1.5rem; z-index:300; min-width:280px; max-width:400px;">
+  <div class="alert" id="global-alert-msg"></div>
+</div>
+
+<script src="js/manager.js"></script>
 </body>
-
 </html>
