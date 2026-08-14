@@ -2,20 +2,27 @@
 const jwt = require('jsonwebtoken');
 const SECRET = process.env.JWT_SECRET || 'grand_horizon_secret_2026';
 
-// Generate token
-const generateToken = (user) => {
-  return jwt.sign(
-    { id: user.CustomerID, email: user.Email, role: user.role },
-    SECRET,
-    { expiresIn: '8h' }
-  );
+// ── Valid roles ───────────────────────────────────────────────────────────────
+const ROLES = {
+  CUSTOMER:        'customer',
+  ADMINISTRATOR:   'Administrator',
+  EVENT_STAFF:     'Event Staff',
+  FINANCE_STAFF:   'Finance/Billing Staff',
 };
 
-// Verify token middleware
+// ── Generate token ────────────────────────────────────────────────────────────
+// payload: { id, email, role, type }
+// type: 'customer' | 'staff'
+const generateToken = (payload) => {
+  return jwt.sign(payload, SECRET, { expiresIn: '8h' });
+};
+
+// ── Verify token (all authenticated users) ────────────────────────────────────
 const verifyToken = (req, res, next) => {
-  const auth = req.headers['authorization'];
+  const auth  = req.headers['authorization'];
   const token = auth && auth.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+  if (!token)
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
   try {
     req.user = jwt.verify(token, SECRET);
     next();
@@ -24,18 +31,78 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Require manager role
-const requireManager = (req, res, next) => {
-  if (req.user?.role !== 'manager') {
-    return res.status(403).json({ error: 'Manager access required.' });
+// ── Require any staff role ────────────────────────────────────────────────────
+// Allows: Administrator | Event Staff | Finance/Billing Staff
+const requireStaff = (req, res, next) => {
+  const staffRoles = [
+    ROLES.ADMINISTRATOR,
+    ROLES.EVENT_STAFF,
+    ROLES.FINANCE_STAFF
+  ];
+  if (!req.user || !staffRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Staff access required.' });
   }
   next();
 };
 
-// Require client role
-const requireClient = (req, res, next) => {
-  if (!req.user) return res.status(401).json({ error: 'Authentication required.' });
+// ── Require Administrator role only ───────────────────────────────────────────
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== ROLES.ADMINISTRATOR) {
+    return res.status(403).json({ error: 'Administrator access required.' });
+  }
   next();
 };
 
-module.exports = { generateToken, verifyToken, requireManager, requireClient };
+// ── Require Event Staff or Administrator ──────────────────────────────────────
+const requireEventStaff = (req, res, next) => {
+  const allowed = [ROLES.ADMINISTRATOR, ROLES.EVENT_STAFF];
+  if (!req.user || !allowed.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Event Staff or Administrator access required.' });
+  }
+  next();
+};
+
+// ── Require Finance/Billing Staff or Administrator ────────────────────────────
+const requireFinanceStaff = (req, res, next) => {
+  const allowed = [ROLES.ADMINISTRATOR, ROLES.FINANCE_STAFF];
+  if (!req.user || !allowed.includes(req.user.role)) {
+    return res.status(403).json({ error: 'Finance/Billing Staff or Administrator access required.' });
+  }
+  next();
+};
+
+// ── Require Customer role ─────────────────────────────────────────────────────
+const requireCustomer = (req, res, next) => {
+  if (!req.user || req.user.role !== ROLES.CUSTOMER) {
+    return res.status(403).json({ error: 'Customer access required.' });
+  }
+  next();
+};
+
+// ── Require any authenticated user (Customer or Staff) ───────────────────────
+const requireAuth = (req, res, next) => {
+  if (!req.user)
+    return res.status(401).json({ error: 'Authentication required.' });
+  next();
+};
+
+// ── Legacy aliases (backward compatibility) ───────────────────────────────────
+// requireManager maps to requireStaff (any staff role)
+// requireClient  maps to requireCustomer
+const requireManager = requireStaff;
+const requireClient  = requireCustomer;
+
+module.exports = {
+  generateToken,
+  verifyToken,
+  requireAdmin,
+  requireStaff,
+  requireEventStaff,
+  requireFinanceStaff,
+  requireCustomer,
+  requireAuth,
+  // legacy aliases
+  requireManager,
+  requireClient,
+  ROLES,
+};
