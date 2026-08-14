@@ -103,14 +103,98 @@ router.get('/:id', verifyToken, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/invoices/:id/pay — Record payment (Finance/Billing Staff or Admin)
+// POST /api/invoices/:id/customer-pay — Customer self-payment (demo/recording)
+//
+// Allows an authenticated customer to pay ONLY their own invoice.
+// Works for BOTH room reservation invoices AND event booking invoices.
+// This is a demo payment endpoint — no real payment gateway is integrated.
+// To add MoMo/Card: insert the gateway call before the UPDATE INVOICE below.
 //
 // TRANSACTION SCOPE:
 //   BEGIN
 //     1. Lock invoice row (FOR UPDATE)
-//     2. Validate invoice exists
-//     3. Update PaymentStatus based on amount paid
+//     2. Validate invoice belongs to the authenticated customer
+//     3. Validate invoice is not already fully paid
+//     4. UPDATE PaymentStatus based on amount paid
 //   COMMIT / ROLLBACK
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/:id/customer-pay', verifyToken, validatePayment, async (req, res) => {
+  const { AmountPaid } = req.body;
+  const customerID     = req.user.id;
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // Lock invoice row
+    const [rows] = await conn.query(
+      'SELECT * FROM INVOICE WHERE InvoiceID = ? FOR UPDATE',
+      [req.params.id]
+    );
+    if (!rows.length) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Invoice not found.' });
+    }
+
+    const inv = rows[0];
+
+    // Validate invoice belongs to this customer (room reservation OR event booking)
+    const [ownership] = await conn.query(`
+      SELECT 1 FROM RESERVATION  WHERE ReservationID = ? AND CustomerID = ?
+      UNION
+      SELECT 1 FROM EVENT_BOOKING WHERE EventID       = ? AND CustomerID = ?
+    `, [inv.ReservationID, customerID, inv.EventID, customerID]);
+
+    if (!ownership.length) {
+      await conn.rollback();
+      return res.status(403).json({ error: 'You are not authorised to pay this invoice.' });
+    }
+
+    // Block if already fully paid
+    if (inv.PaymentStatus === 'Paid') {
+      await conn.rollback();
+      return res.status(400).json({ error: 'This invoice has already been fully paid.' });
+    }
+
+    // Determine new payment status
+    const newStatus = parseFloat(AmountPaid) >= parseFloat(inv.TotalAmount)
+                      ? 'Paid'
+                      : 'Partially Paid';
+
+    // ── Future MoMo/Card gateway integration point ────────────────────────────
+    // const momoResult = await callMoMoAPI(AmountPaid, customerPhone);
+    // if (!momoResult.success) {
+    //   await conn.rollback();
+    //   return res.status(402).json({ error: 'Payment gateway declined the transaction.' });
+    // }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    await conn.query(
+      'UPDATE INVOICE SET PaymentStatus = ? WHERE InvoiceID = ?',
+      [newStatus, req.params.id]
+    );
+
+    await conn.commit();
+
+    res.json({
+      message:       `Payment recorded successfully. Status: ${newStatus}.`,
+      InvoiceID:     parseInt(req.params.id),
+      AmountPaid:    parseFloat(AmountPaid),
+      TotalAmount:   parseFloat(inv.TotalAmount),
+      PaymentStatus: newStatus
+    });
+
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/invoices/:id/pay — Record payment (Finance/Billing Staff or Admin)
+// Manager-only endpoint — unchanged, not accessible by customers
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/:id/pay', verifyToken, requireFinanceStaff, validatePayment, async (req, res) => {
   const { AmountPaid } = req.body;
@@ -119,7 +203,6 @@ router.post('/:id/pay', verifyToken, requireFinanceStaff, validatePayment, async
   try {
     await conn.beginTransaction();
 
-    // Lock invoice row to prevent concurrent payment updates
     const [rows] = await conn.query(
       'SELECT * FROM INVOICE WHERE InvoiceID = ? FOR UPDATE',
       [req.params.id]
